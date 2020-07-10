@@ -2,8 +2,9 @@ var userFormEl = document.querySelector("#user-form");
 var nameInputEl = document.querySelector("#username");
 var repoContainerEl = document.querySelector("#repos-container");
 var repoSearchTerm = document.querySelector("#repo-search-term");
+var languageButtonsEl =document.querySelector("#language-buttons")
 
-var formSubmitHandler = function(event) {
+var formSubmitHandler = function (event) {
     event.preventDefault();
     // get value from input element
     var username = nameInputEl.value.trim();
@@ -17,29 +18,43 @@ var formSubmitHandler = function(event) {
     }
 }
 
-var getUsersRepos = function(user) {
+var getUsersRepos = function (user) {
     // format the github api url
     var apiUrl = "https://api.github.com/users/" + user + "/repos";
 
     // make a request to the url
     fetch(apiUrl)
-        .then(function(response) {
+        .then(function (response) {
             // request was successful
-            if (response.ok){
-            response.json().then(function(data) {
-                displayReops(data, user);
-            });
+            if (response.ok) {
+                response.json().then(function (data) {
+                    displayReops(data, user);
+                });
             } else {
                 alert("Error " + response.statusText);
+            }
+        })
+        .catch(function (error) {
+            //Notice this`.catch()` getting chained onto the end of the `then()` method.
+            alert("Unable to connect to GitHub");
+        });
+};
+
+var getFeaturedRepos = function (language) {
+    var apiUrl = "https://api.github.com/search/repositories?q=" + language + "+is:featured&sort=help-wanted-issues";
+    fetch(apiUrl).then(function (response) {
+        if (response.ok) {
+            response.json().then(function (data) {
+                displayReops(data.items, language);
+            });
         }
-    })
-    .catch(function(error) {
-        //Notice this`.catch()` getting chained onto the end of the `then()` method.
-        alert("Unable to connect to GitHub");
+        else {
+            alert("Error: " + response.statusText);
+        }
     });
 };
 
-var displayReops = function(repos, searchTerm) {
+var displayReops = function (repos, searchTerm) {
     // clear old content
     repoContainerEl.textContent = "";
     repoSearchTerm.textContent = searchTerm;
@@ -87,6 +102,16 @@ var displayReops = function(repos, searchTerm) {
     }
 };
 
-userFormEl.addEventListener("submit", formSubmitHandler);
+var buttonClickHandler = function(event) {
+    var language = event.target.gettAttribute("data-language");
+    console.log(language);
+    if (language) {
+        getFeaturedRepos(language);
 
-console.log("outside");
+        repoContainerEl.textContent = "";
+    }
+
+};
+
+userFormEl.addEventListener("submit", formSubmitHandler);
+languageButtonsEl.addEventListener("click", buttonClickHandler);
